@@ -1,0 +1,511 @@
+Below are the Answers to the Questions Provided in query.txt.  Screenshots of the queries working correctly in my page are supplied in db-screenshots.pdf (attached in zip file).
+
+
+After the questions are the statements I used to populate the database.
+
+
+NOTE: When working on this assignment, I ran all of the statements in my local deployment of the web page and it worked perfectly.  I went to test it on the Auburn Server and it would not run, after which I found out the server is running an older version of php that made a lot of the functionality not work.  I was able to fix everything about it besides a slight problem that seems to randomly happen with Quotations (single or double), where the program will add slashes in front of the quotation marks in the text box after you run it and it displays the output.  This does not happen every time, and it doesn't affect the functionality unless you go to hit "Execute Query" again after already doing it, but I figured I would make note of it.
+
+
+
+
+1. Show the subject names of books supplied by *supplier2*.
+
+
+
+SELECT s.CategoryName
+FROM db_subject s, db_book b, db_supplier sp
+WHERE sp.CompanyName='supplier2'
+  AND b.SupplierID=sp.SupplierID
+  AND b.SubjectID=s.SubjectID
+
+
+
+2. Show the name and price of the most expensive book supplied by *supplier3*.
+
+
+
+SELECT b.Title, b.UnitPrice
+FROM db_book b
+WHERE b.UnitPrice=(
+   SELECT MAX(m.UnitPrice)
+   FROM db_book m, db_supplier s
+   WHERE s.CompanyName='supplier3'
+      AND s.SupplierID=m.SupplierID)
+
+
+
+
+
+
+
+3. Show the unique names of all books ordered by *lastname1
+     firstname1*.
+
+
+SELECT DISTINCT b.Title
+FROM db_order o
+JOIN db_order_detail od ON o.OrderID = od.OrderID
+JOIN db_book b ON od.BookID = b.BookID
+JOIN db_customer c ON o.CustomerID = c.CustomerID
+WHERE c.LastName = 'lastname1' AND c.FirstName = 'firstname1';
+
+
+
+
+
+
+4. Show the title of books which have more than 10 units in stock.
+
+
+
+SELECT b.Title
+FROM db_book b
+WHERE b.Quantity>10
+
+
+
+
+
+
+
+5. Show the total price *lastname1 firstname1* has paid for the books.
+
+
+
+
+SELECT SUM(b.UnitPrice * d.Quantity) AS Total
+FROM db_book b, db_customer c, db_order o, db_order_detail d
+WHERE c.CustomerID = o.CustomerID
+   AND o.OrderID = d.OrderID
+   AND d.BookID = b.BookID
+   AND c.FirstName = 'firstname1'
+   AND c.LastName = 'lastname1'
+
+
+
+
+
+
+
+
+6. Show the names of the customers who have paid less than $80 in
+     totals.
+
+
+
+
+SELECT c.FirstName, c.LastName
+FROM db_book b, db_customer c, db_order o, db_order_detail d
+WHERE o.OrderID = d.OrderID
+   AND d.BookID = b.BookID
+   AND c.CustomerID = o.CustomerID
+GROUP BY c.CustomerID
+HAVING SUM(b.UnitPrice * d.Quantity) < 80
+
+
+
+
+7. Show the name of books supplied by *supplier2*.
+
+
+
+SELECT b.Title
+FROM db_book b, db_supplier s
+WHERE b.SupplierID = s.SupplierID
+AND s.CompanyName = 'supplier2'
+
+
+
+
+
+
+
+
+8. Show the total price each customer paid and their names.  List the
+     result in descending price.
+
+
+
+SELECT SUM(b.UnitPrice * d.Quantity) AS Total, c.FirstName, c.LastName
+FROM db_book b, db_customer c, db_order o, db_order_detail d
+WHERE o.OrderID = d.OrderID
+   AND c.CustomerID = o.CustomerID
+   AND b.BookID = d.BookID
+GROUP BY c.CustomerID
+ORDER BY SUM(b.UnitPrice * d.Quantity) DESC
+
+
+
+
+
+
+
+9. Show the names of all the books shipped on 08/04/2016 and their
+     shippers' names.
+
+(Used as ShipperName bc in data file ShipperName was ShpperName)
+ 
+
+SELECT b.Title, s.ShpperName AS ShipperName
+FROM db_book b, db_order o, db_order_detail d, db_shipper s
+WHERE o.ShippedDate = "08/04/2016"
+   AND d.BookID = b.BookID
+   AND o.OrderID = d.OrderID
+   AND o.ShipperID = s.ShipperID
+
+
+
+
+
+10. Show the unique names of all the books *lastname1 firstname1* and
+     *lastname4 firstname4* *both* ordered.
+
+
+SELECT b.Title
+FROM db_book b, db_order o, db_order_detail d, db_customer c
+WHERE c.FirstName = "firstname1"
+   AND c.LastName = "lastname1"
+   AND c.CustomerID = o.CustomerID
+   AND b.BookID = d.BookID
+   AND d.OrderID = o.OrderID
+INTERSECT
+SELECT b.Title
+FROM db_book b, db_order o, db_order_detail d, db_customer c
+WHERE c.FirstName = "firstname4"
+   AND c.LastName = "lastname4"
+   AND c.CustomerID = o.CustomerID
+   AND b.BookID = d.BookID
+   AND d.OrderID = o.OrderID
+
+
+
+
+
+
+
+
+11. Show the names of all the books *lastname6 firstname6* was
+     responsible for.
+
+
+SELECT DISTINCT b.Title
+FROM db_order o, db_order_detail d, db_employee e, db_book b
+WHERE e.FirstName = "firstname6"
+      AND e.LastName = "lastname6"
+      AND o.OrderID = d.OrderID
+      AND d.BookID = b.BookID
+      AND e.EmployeeID = o.EmployeeID
+
+
+
+
+12. Show the names of all the ordered books and their total
+     quantities.  List the result in ascending quantity.
+
+
+SELECT b.Title, SUM(d.Quantity) AS Quantity
+FROM db_order_detail d, db_book b
+WHERE d.BookID = b.BookID
+GROUP BY b.BookID
+ORDER BY SUM(d.Quantity) ASC
+
+
+
+
+
+
+
+
+
+
+13. Show the names of the customers who ordered at least 2 books.
+
+
+
+SELECT c.FirstName, c.LastName
+FROM db_customer c, db_order o, db_order_detail d
+WHERE o.CustomerID = c.CustomerID
+   AND o.OrderID = d.OrderID
+GROUP BY c.CustomerID
+HAVING SUM(d.Quantity) >= 2
+
+
+
+
+
+
+14. Show the name of the customers who have ordered at least a book in
+     *category3* or *category4* and the book names.
+
+
+SELECT c.FirstName, c.LastName, b.Title
+FROM db_book b, db_order o, db_customer c, db_order_detail d, db_subject s
+WHERE b.SubjectID = s.SubjectID
+   AND d.OrderID = o.OrderID
+   AND b.BookId = d.BookID
+   AND o.CustomerID = c.CustomerID
+   AND (s.CategoryName = "category3" OR s.CategoryName = "category4")
+
+
+
+
+
+
+15. Show the name of the customer who has ordered at least one book
+     written by *author1*.
+
+
+
+SELECT DISTINCT c.FirstName, c.LastName
+FROM db_book b, db_customer c, db_order o, db_order_detail d
+WHERE b.Author = "author1"
+   AND b.BookID = d.BookID
+   AND o.CustomerID = c.CustomerID
+   AND d.OrderID = o.OrderID
+
+
+
+
+
+
+16. Show the name and total sale (price of orders) of each employee.
+
+
+
+
+SELECT e.FirstName, e.LastName, SUM(d.Quantity * b.UnitPrice) as Total
+FROM db_employee e, db_order o, db_order_detail d, db_book b
+WHERE e.EmployeeID = o.EmployeeID
+   AND d.BookID = b.BookID
+   AND o.OrderID = d.OrderID
+GROUP BY e.EmployeeID
+
+
+
+
+
+17. Show the book names and their respective quantities for open
+     orders (the orders which have not been shipped) at midnight
+     08/04/2016.
+
+
+
+SELECT b.Title, SUM(d.Quantity) AS Quantity
+FROM db_book b, db_order o, db_order_detail d
+WHERE o.OrderID NOT IN (
+    SELECT x.OrderID
+    FROM db_order x
+    WHERE x.ShippedDate IS NOT NULL
+         AND x.ShippedDate < "08/04/2016")
+    AND o.OrderID = d.OrderID
+    AND b.BookID = d.BookID
+GROUP BY b.BookID
+
+
+
+
+
+
+18. Show the names of customers who have ordered more than 1 book and
+     the corresponding quantities.  List the result in the descending
+     quantity.
+
+
+
+SELECT c.FirstName, c.LastName, SUM(d.Quantity) AS Quantity
+FROM db_customer c, db_order o, db_order_detail d 
+WHERE c.CustomerID = o.CustomerID
+   AND o.OrderID = d.OrderID
+GROUP BY c.CustomerID
+HAVING SUM(d.Quantity) > 1
+ORDER BY SUM(d.Quantity) DESC
+
+
+
+
+
+
+
+
+
+19. Show the names of customers who have ordered more than 3 books and
+     their respective telephone numbers.
+
+
+SELECT c.FirstName, c.LastName, c.Phone
+FROM db_order o, db_order_detail d, db_customer c
+WHERE o.OrderID = d.OrderID
+   AND c.CustomerID = o.CustomerID
+GROUP BY c.CustomerID
+HAVING SUM(d.Quantity) > 3
+
+
+
+
+
+
+
+DATABASE CREATION STATEMENTS:
+
+
+NOTE: The MySQL application would not open w/o crashing on my device, (even with older versions) so I had to manually create instead of using import wizard.  The following assumptions were made with respect to all of the "On Delete _________ / ON UPDATE ______________ " choices:
+
+1. In Db book if a supplier ID is deleted, then the book that was "supplied" by that supplier should also be deleted from the database - CASCADE (Same if they supplier ID is changed it should be updated there).
+2. In Db book If a subject is deleted, then the books that are a part of that subject should also be deleted - CASCADE. (Same if the subjectID is changed it should be updated there).
+3. In Db Order If a CustomerID is deleted, it should just be set to null in that order, as the order has already been place, and records should be kept. If updated it should CASCADE and update in the order. (Same Logic for EmployeeID and ShipperID).
+4. In Db Order Details if a bookID is deleted it should be set to null in the table, as the order was already placed, but if it is updated then it should cascade in the table and update accordingly.
+5.  In Db Order Details if a orderID is deleted it should be deleted from the table as the order was probably cancelled (CASCADE), same if it is updated then it should cascade in the table and update accordingly.
+
+
+db_book:
+
+CREATE TABLE db_book (
+    -> BookID INT PRIMARY KEY,
+    -> Title VARCHAR(255) NOT NULL,
+    -> UnitPrice DECIMAL(10, 2),
+    -> Author VARCHAR(255),
+    -> Quantity INT,
+    -> SupplierID INT, 
+    -> SubjectID INT,
+    -> FOREIGN KEY (SupplierID) REFERENCES db_supplier(SupplierID) ON DELETE CASCADE ON UPDATE CASCADE,
+    -> FOREIGN KEY (SubjectID) REFERENCES db_subject(SubjectID) ON DELETE CASCADE ON UPDATE CASCADE
+    -> );
+
+
+DB_SUPPLIER:
+
+CREATE TABLE db_supplier (
+    -> SupplierID INT PRIMARY KEY,
+    -> CompanyName VARCHAR(255) NOT NULL,
+    -> ContactLastName VARCHAR(255),
+    -> ContactFirstName VARCHAR(255),
+    -> Phone INT
+    -> );
+
+db_subject:
+
+CREATE TABLE db_subject (
+    -> SubjectID INT PRIMARY KEY,
+    -> CategoryName VARCHAR(255)
+    -> );
+
+db_shipper:
+
+CREATE TABLE db_shipper (
+    -> ShipperID INT PRIMARY KEY,
+    -> ShpperName VARCHAR(255)
+    -> );
+
+db_employee:
+
+CREATE TABLE db_employee (
+    -> EmployeeID INT PRIMARY KEY,
+    -> LastName VARCHAR(255),
+    -> FirstName VARCHAR(255)
+    -> );
+
+db_customer:
+
+MariaDB [lkm0049db]> CREATE TABLE db_customer (
+    -> CustomerID INT PRIMARY KEY, 
+    -> LastName VARCHAR(255),
+    -> FirstName VARCHAR(255),
+    -> Phone VARCHAR(15)
+    -> );
+
+
+
+
+
+db_order: CREATE TABLE db_order ( 
+OrderID INT PRIMARY KEY, 
+CustomerID INT, 
+EmployeeID INT, 
+OrderDate VARCHAR(10), 
+ShipperID INT, 
+ShippedDate VARCHAR(10), 
+FOREIGN KEY (CustomerID) REFERENCES db_customer(CustomerID) ON DELETE SET NULL ON UPDATE CASCADE, 
+FOREIGN KEY (EmployeeID) REFERENCES db_employee(EmployeeID) ON DELETE SET NULL ON UPDATE CASCADE, 
+FOREIGN KEY (ShipperID) REFERENCES db_shipper(ShipperID) ON DELETE SET NULL ON UPDATE CASCADE 
+);
+
+db_order_detail: 
+
+CREATE TABLE db_order_detail (
+    -> BookID INT,
+    -> OrderID INT,
+    -> Quantity INT,
+    -> FOREIGN KEY (BookID) REFERENCES db_book(BookID) ON DELETE SET NULL ON UPDATE CASCADE,
+    -> FOREIGN KEY (OrderID) REFERENCES db_order(OrderID) ON DELETE CASCADE ON UPDATE CASCADE);
+
+
+
+DATABASE POPULATION STATEMENTS (Copied the contents of the excel tables exactly, even if it was formatted differently than usual or spelled incorrectly):
+
+
+INSERT INTO db_supplier (SupplierID, CompanyName, ContactLastName, ContactFirstName, Phone)
+    -> VALUES
+    -> (1, 'supplier1', 'company1', 'company1', 1111111111),
+    ->     (2, 'supplier2', 'company2', 'company2', 2222222222),
+    ->     (3, 'supplier3', 'company3', 'company3', 3333333333),
+    ->     (4, 'supplier4', 'company4', NULL, 4444444444);
+
+INSERT INTO db_subject (SubjectID, CategoryName) VALUES (1, 'category1'), (2, 'category2'), (3, 'category3'), (4, 'category4'), (5, 'category5');
+
+INSERT INTO db_book (BookID, Title, UnitPrice, Author, Quantity, SupplierID, SubjectID)
+    -> VALUES
+    ->     (1, 'book1', 12.34, 'author1', 5, 3, 1),
+    ->     (2, 'book2', 56.78, 'author2', 2, 3, 1),
+    ->     (3, 'book3', 90.12, 'author3', 10, 2, 1),
+    ->     (4, 'book4', 34.56, 'author4', 12, 3, 2),
+    ->     (5, 'book5', 78.9, 'author5', 5, 2, 2),
+    ->     (6, 'book6', 12.34, 'author6', 30, 1, 3),
+    ->     (7, 'book7', 56.9, 'author2', 17, 3, 4),
+    ->     (8, 'book8', 33.44, 'author7', 2, 1, 3);
+
+INSERT INTO db_customer (CustomerID, LastName, FirstName, Phone)
+    -> VALUES
+    ->     (1, 'lastname1', 'firstname1', '334-001-001'),
+    ->     (2, 'lastname2', 'firstname2', '334-002-002'),
+    ->     (3, 'lastname3', 'firstname3', '334-003-003'),
+    ->     (4, 'lastname4', 'firstname4', '334-004-004');
+
+INSERT INTO db_employee (EmployeeID, LastName, FirstName)
+    -> VALUES
+    ->     (1, 'lastname5', 'firstname5'),
+    ->     (2, 'lastname6', 'firstname6'),
+    ->     (3, 'lastname6', 'firstname9');
+
+INSERT INTO db_order (OrderID, CustomerID, EmployeeID, OrderDate, ShippedDate, ShipperID)
+    -> VALUES
+    ->     (1, 1, 1, '08/01/2016', '08/03/2016', 1),
+    ->     (2, 1, 2, '08/04/2016', NULL, NULL),
+    ->     (3, 2, 1, '08/01/2016', '08/04/2016', 2),
+    ->     (4, 4, 2, '08/04/2016', '08/04/2016', 1),
+    ->     (5, 1, 1, '08/04/2016', '08/05/2016', 1),
+    ->     (6, 4, 2, '08/04/2016', '08/05/2016', 1),
+    ->     (7, 3, 1, '08/04/2016', '08/04/2016', 1);
+
+INSERT INTO db_order_detail (BookID, OrderID, Quantity)
+    -> VALUES
+    ->     (1, 1, 2),
+    ->     (4, 1, 1),
+    ->     (6, 2, 2),
+    ->     (7, 2, 3),
+    ->     (5, 3, 1),
+    ->     (3, 4, 2),
+    ->     (4, 4, 1),
+    ->     (7, 4, 1),
+    ->     (1, 5, 1),
+    ->     (1, 6, 2),
+    ->     (1, 7, 1);
+
+INSERT INTO db_shipper (ShipperID, ShpperName) VALUES (1, 'shipper1'), (2, 'shipper2'), (3, 'shipper3'), (4, 'shipper4');
+
+
+
+
+
+
+
